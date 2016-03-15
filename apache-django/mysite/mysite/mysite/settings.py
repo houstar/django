@@ -4,8 +4,8 @@ import os
 dbAddr = os.environ.get('MYSQL_MASTER_SERVICE_HOST')
 dbPort = os.environ.get('MYSQL_MASTER_SERVICE_PORT') 
 dbPort = int(dbPort)
-dbPasswd = os.environ.get('MYSQL_ROOT_PASSWORD') 
-dbDatabase = os.environ.get('MYSQL_DATABASE')   
+dbPasswd = '000000' 
+dbDatabase = 'LTC_China_CommitInfo'   
 
 
 DEBUG = True

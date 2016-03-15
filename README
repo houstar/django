@@ -1,0 +1,8 @@
+# Installation Environment
+* libvirt-coreos with kubenetes On Ubuntu 15.04
+# Install nfs-server in Ubuntu
+* #apt-get install nfs-server
+* #cat >> /etc/exports < EOF
+/root/django/db 10.10.*.*(rw,no_splash)
+* #service nfs-server restart
+* #tar -xvf db.tar -C /root/django/

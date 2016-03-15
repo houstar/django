@@ -15,11 +15,9 @@ spec:
     spec:
       containers:
       - name: django
-        image: venture/django
+        image: venture/django:1.5.17
         env:
-        - name: GET_HOSTS_FROM
-          value: env
-          name: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_ROOT_PASSWORD
           value: "000000"
           name: MYSQL_DATABASE
           value: LTC_China_CommitInfo
