@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: django
+  labels:
+    name: django
+spec:
+  replicas: 3
+  selector:
+    name: django
+  template:
+    metadata:
+      labels:
+        name: django
+    spec:
+      containers:
+      - name: django
+        image: venture/django
+        env:
+        - name: GET_HOSTS_FROM
+          value: env
+          name: MYSQL_ROOT_PASSWORD
+          value: "000000"
+          name: MYSQL_DATABASE
+          value: LTC_China_CommitInfo
+        ports:
+        - containerPort: 80
+            
+
+
