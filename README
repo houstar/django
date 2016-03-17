@@ -1,8 +1,144 @@
-# Installation Environment
-* libvirt-coreos with kubenetes On Ubuntu 15.04
-# Install nfs-server in Ubuntu
-* #apt-get install nfs-server
-* #cat >> /etc/exports < EOF
-/root/django/db 10.10.*.*(rw,no_splash)
-* #service nfs-server restart
-* #tar -xvf db.tar -C /root/django/
+Kubenetes of Docker web patch 1.0
+
+Date       : March 15,2016
+Author    : Leno  Hou
+E-mail     : lenohou@gmail.com
+
+All sourcecode can be download from https://github.com/houstar/django.git
+
+
+1.  Architecture
+Environment 
+    libvirt-coreos with kubernetes on Ubuntu 15.04 ( as hypervisor ).
+
+
+2. Install nfs-server to Hypervisor
+#apt-get install nfs-server
+#cat >> /etc/exports < EOF
+/root/django/db  10.10.*.*(rw,no_root_squash)
+EOF
+#service nfs-server restart
+#tar -xvf db.tar -C /root/django/
+3.  MySQL-Master ReplicationController
+#cat mysql-master-rc.yaml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: mysql-master
+  labels: 
+    name: mysql-master
+spec: 
+  replicas: 1
+  selector: 
+    name: mysql-master
+  template:
+    metadata:
+      labels:
+        name: mysql-master
+    spec:
+      containers:
+      - name: mysql-master
+        image: mysql
+        env: 
+          - name: MYSQL_ROOT_PASSWORD
+            value: "000000"
+            name: MYSQL_DATABASE
+            value: LTC_China_CommitInfo
+        ports:
+        - containerPort: 3306
+          name: mysql-master
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        nfs:
+          # This path must already exist.
+          # We use this IP for PODs mount volume
+          server: 10.10.0.100
+          path: "/root/django/db" 
+
+
+#kubectl create -f mysql-master-rc.yaml
+
+4. MySQL-Master Service
+#cat mysql-master-service.yaml
+
+ apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-master
+  labels:
+    name: mysql-master
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    name: mysql-master
+
+#kubectl create -f mysql-master-service.yaml
+
+5. Django ReplicationController
+Step 1. Before create django rc, you should make venture/django image and push to docker hub.
+#git clone https://github.com/houstar/django.git
+#cd django/appache-django
+#docker build -t venture/django:1.5.17 .
+#docker login
+#docker push venture/django:1.5.17
+Step 2. Create Django RC
+#cat django-rc.yaml
+apiVersion: v1 
+kind: ReplicationController 
+metadata: 
+  name: django 
+  labels: 
+    name: django 
+spec: 
+  replicas: 2
+  selector: 
+    name: django 
+  template: 
+    metadata: 
+      labels: 
+        name: django 
+    spec: 
+      containers: 
+      - name: django 
+        image: venture/django:1.5.17 
+        env: 
+        - name: MYSQL_ROOT_PASSWORD 
+          value: "000000" 
+          name: MYSQL_DATABASE 
+          value: LTC_China_CommitInfo 
+        ports: 
+        - containerPort: 80 
+
+
+#kubectl create -f django-rc.yaml
+6. Django Service
+#cat django-service.yaml
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: django 
+  labels: 
+    name: django 
+spec: 
+  type: NodePort 
+  ports: 
+  - port: 80 
+    nodePort: 30001 
+  selector: 
+    name: django 
+
+#kubectl create -f django-service.yaml
+
+7. How to visit this Django service ?
+Visit the Django Server by NodeIP:NodePort
+#links http://192.168.10.3:30001
+
+Publish Service to Internet
+#ssh -CfNg -L 80:192.168.10.4:30001 core@192.168.10.3
+Then open http://9.114.111.63 in your browser.
+
